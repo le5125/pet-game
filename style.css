@@ -1,0 +1,875 @@
+
+   /* 🧱 全域設定：基本頁面格式與預設樣式 */
+html, body {
+    height: 100%;               /* 全頁滿高 */
+    margin: 0;                  /* 移除預設邊距 */
+    padding: 0;                 /* 移除預設內距 */
+    font-size: 48px;            /* 全站基礎字體大小（含 icon 用） */
+    background-color: #fff;     /* 預設背景為白色 */
+    overflow: hidden;           /* 防止畫面捲動 */
+}
+
+/* 🔴 主角圓點角色樣式（用圖片表示） */
+.sprite {
+  width: 400px;
+  height: 400px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* 🔋 狀態條基礎樣式（用於飽足、快樂、清潔等） */
+.status-bar {
+    height: 10px;               /* 狀態條高度 */
+    border-radius: 5px;         /* 圓角設計 */
+    transition: width 0.3s ease;/* 寬度變化加入動畫過渡效果 */
+}
+
+/* 💬 對話泡泡樣式（角色說話使用） */
+
+.speech-bubble {
+    position: absolute;         /* 讓泡泡浮動在角色上方 */
+    background: white;          /* 背景白色 */
+    border-radius: 10px;        /* 圓角泡泡 */
+    padding: 12px 20px;         /* 內距調整文字間距 */
+    font-size: 36px;            /* 文字大小 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 陰影效果 */
+    white-space: nowrap;        /* 單行不換行 */
+    display: inline-block;      /* 自動寬度顯示 */
+    opacity: 0;                 /* 預設隱藏，透過 JS 控制顯示 */
+    transition: opacity 0.3s ease;       /* 顯示與隱藏的動畫 */
+    pointer-events: none;       /* 不影響滑鼠點擊 */
+    top: -60px;                 /* 從角色頂端往上偏移 */
+    left: 50%;                  /* 水平置中 */
+    transform: translateX(-50%);/* 水平移動置中對齊 */
+    max-width: 90vw;            /* 最多不要超出畫面寬度 */
+    word-break: break-word;            /* ✅ 中文會自動斷行 */
+    overflow: hidden;           /* 超出部分隱藏 */
+    text-overflow: ellipsis;    /* 超過加上 ... */
+}
+
+/* 💬 對話泡泡箭頭樣式（三角形指向角色） */
+.speech-bubble:after {
+    content: '';                            /* 顯示空內容產生箭頭 */
+    position: absolute;
+    left: 50%;                              /* 置中 */
+    bottom: -10px;                          /* 從下方延伸箭頭 */
+    transform: translateX(-50%);            /* 對齊中心 */
+    border-width: 10px 10px 0 10px;         /* 上方三角形 */
+    border-style: solid;
+    border-color: white transparent transparent transparent; /* 白色箭頭 */
+}
+
+/* ⛳ walk：模擬角色左右搖擺＋上下小幅移動，表現出「走路中」的效果 */
+@keyframes walk {
+  0%, 100% { transform: translateX(0) translateY(0); }        /* 起點與終點歸位 */
+  25%      { transform: translateX(5px) translateY(-2px); }   /* 微往右上 */
+  50%      { transform: translateX(10px) translateY(0); }     /* 更往右但回中線 */
+  75%      { transform: translateX(5px) translateY(2px); }    /* 往右下 */
+}
+/* 🍽️ eat：角色垂直方向輕微彈跳，模擬「吃東西時點頭」的效果 */
+@keyframes eat {
+  0%, 100% { transform: translateY(0); }                      /* 預設位置 */
+  50%      { transform: translateY(5px); }                    /* 向下壓 */
+}
+/* 🎮 play：左右旋轉擺動，模擬角色「玩耍中，興奮扭動」的效果 */
+@keyframes play {
+  0%, 100% { transform: rotate(0deg); }                       /* 回歸原角度 */
+  25%      { transform: rotate(5deg); }                       /* 向右轉 */
+  75%      { transform: rotate(-5deg); }                      /* 向左轉 */
+}
+/* 💤 sleep：角色睡覺時會微微左右晃並上下移動，模擬呼吸感 */
+@keyframes sleep {
+  0%   { transform: rotate(0deg) translateY(0); }             /* 靜止 */
+  50%  { transform: rotate(5deg) translateY(5px); }           /* 微微旋轉與沉下 */
+  100% { transform: rotate(0deg) translateY(0); }             /* 回到原點 */
+}
+/* 💤 sleepZzz：上升消失的 Zzz 氣泡動畫，用來顯示在角色旁邊 */
+@keyframes sleepZzz {
+  0%   { opacity: 0; transform: translateY(0); }              /* 開始隱形在原地 */
+  50%  { opacity: 1; }                                        /* 漸漸浮現 */
+  100% { opacity: 0; transform: translateY(-20px); }          /* 上升並消失 */
+}
+/* 🎬 狀態類別：角色當前狀態對應動畫，透過 JS 動態加上 class */
+.walking {
+  animation: walk 0.5s infinite;/* 🚶‍♂️ walking：角色正在移動時加上，觸發 walk 動畫 */
+}
+.eating {
+  animation: eat 0.3s infinite;/* 🍔 eating：角色進食中，觸發 eat 動畫（上下點頭） */
+}
+.playing {
+  animation: play 0.5s infinite;/* 🪀 playing：角色玩耍中，觸發旋轉動畫 */
+}
+.sleeping {
+  animation: sleep 2s infinite;/* 🛌 sleeping：角色睡著了，觸發旋轉＋下沉的睡覺動畫 */
+}
+/* 💭 zzz：搭配睡覺狀態，在角色旁飄出 Zzz 泡泡（需放在角色旁邊的 span 或 div） */
+.zzz {
+  position: absolute;                    /* 相對於角色容器定位 */
+  animation: sleepZzz 2s infinite;       /* 持續執行 Zzz 動畫 */
+  font-size: 80px;
+  color: #666;                           /* 淡灰色，避免過於顯眼 */
+}
+
+/* 🐣 角色容器位置與動畫過渡 */
+/* .chicken-container：主要角色外框，包含圖片、動畫等元素，固定置中 */
+.chicken-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);      /* 精準置中畫面 */
+  transition: all 0.3s ease;             /* 任意位置或大小改變時滑順過渡 */
+  z-index: 20;                           /* 在背景與場景上方，避免被蓋住 */
+}
+
+/* 🍗 食物與玩具元素樣式：投放後角色可以互動的物件 */
+
+/* 共用設定：絕對定位＋滑鼠變手＋ hover 放大動畫 */
+.food-item,
+.toy-item {
+  position: absolute;                    /* 投放在畫面任意位置 */
+}
+/* 食物尺寸較小（例如飼料粒） */
+.food-item {
+  width: 20px;
+  height: 20px;
+}
+/* 玩具尺寸略大（例如球） */
+.toy-item {
+  width: 30px;
+  height: 30px;
+}
+/* 滑鼠懸停時變大，吸引點擊 */
+.food-item:hover,
+.toy-item:hover {
+  transform: scale(1.2);
+}
+
+/* .poop：角色排便後生成，為一個固定圖片，出現在畫面上隨機位置 */
+.poop {
+  width: 100px;
+  height: 100px;
+  background-image: url('https://i.imgur.com/n1wu20p.png'); /* 固定大便圖片 URL */
+  background-size: contain;             /* 依比例縮放圖片填滿 */
+  background-repeat: no-repeat;         /* 不重複貼圖 */
+  background-position: center;          /* 圖片置中 */
+  position: absolute;                   /* 可任意定位在畫面上 */
+  overflow: hidden;                     /* 避免內容溢出影響排版 */
+  z-index: 25;                          /* 確保在角色底下、背景之上 */
+}
+/* 🧱 背包格子容器設定 */
+/* 🔹 控制整個背包的排列方式與滾動範圍 */
+#backpack-items {
+  display: grid;                         /* 使用 CSS Grid 佈局，方便製作格子網格 */
+  grid-template-columns: repeat(6, 1fr);/* 每列 6 格，每格平均分配寬度 */
+  gap: 16px;                             /* 每格之間的間距 */
+  max-height: 600px;                     /* 背包最大高度，超過會出現捲軸 */
+  overflow-y: auto;                      /* 垂直方向可捲動，適用道具過多時 */
+}
+/* 📦 單一格子的樣式（即每個背包格子） */
+.backpack-slot {
+  width: 100px;                          /* 每格寬度固定 */
+  height: 100px;                         /* 每格高度固定 */
+  border: 2px solid #999;                /* 灰色邊框 */
+  border-radius: 8px;                    /* 邊框圓角 */
+  background-color: #fdfdfd;             /* 背景淡灰白 */
+  display: flex;                         /* 使用 Flex 對齊內容 */
+  justify-content: center;              /* 水平置中 */
+  align-items: center;                  /* 垂直置中 */
+  font-size: 24px;                       /* 內容文字大小（若有預設內容） */
+  font-weight: bold;                     /* 粗體 */
+  position: relative;                    /* 為了讓 item-count 能定位在右下角 */
+}
+
+/* 🔢 顯示該物品數量的右下角小標籤 */
+.item-count {
+  position: absolute;                    /* 定位在格子右下角 */
+  bottom: 4px;
+  right: 6px;
+  font-size: 18px;                       /* 數字字體稍微小 */
+  background-color: rgba(0,0,0,0.6);     /* 黑色半透明底色，避免被背景干擾 */
+  color: white;                          /* 白字顯示數量 */
+  padding: 2px 6px;                      /* 適度內距，美觀圓角效果 */
+  border-radius: 6px;
+}
+/* 🎒 背包模態框叉叉樣式 */
+#backpack-modal .close-button i {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 100px;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.2s;
+}
+
+#backpack-modal .close-button:hover i {
+  color: #e11d48;
+}
+
+/* 🎯 探險模態框內容寬度調整（地點選擇用） */
+/* 🧭 控制 #explore-modal 裡的內容大小與排版 */
+#explore-modal .modal-content {
+  width: 800px;                          /* 固定寬度，也可視需求調整 */
+  height: auto;                          /* 高度自動撐開 */
+  max-width: 90vw;                       /* 行動裝置下不超出畫面寬度 */
+  padding: 32px;                         /* 內距增大，讓內容不貼邊 */
+}
+/* 探險模態框中的標題置中顯示 */
+#explore-modal .modal-content h2 {
+  text-align: center;
+}
+
+/* 探險模態框中的按鈕樣式（如三個地點） */
+#explore-modal .modal-content button {
+  font-size: 80px;                       /* 字大一點，方便點擊 */
+  padding: 40px;                         /* 加大按鈕範圍，增強可點擊性 */
+}
+
+/* 🎁 探險獎勵模態框設定（當探險結束顯示獲得道具） */
+#explore-reward-modal .modal-content {
+  width: 1200px;                          /* 略小於探險地點選單 */
+  height: auto;                          /* 高度根據內容調整 */
+}
+/* ✨ 自訂探險模態框的叉叉樣式 */
+#explore-modal .close-button i {
+  position: absolute;
+  top: 12px;              /* 你可以調整這裡上下位置 */
+  right: 12px;            /* 你可以調整這裡左右位置 */
+  font-size: 100px;        /* 調整大小（越大越明顯） */
+  color: #555;            /* 預設顏色 */
+  background: none;       /* 移除背景 */
+  border: none;           /* 移除邊框 */
+  cursor: pointer;        /* 滑鼠變手指 */
+  z-index: 10;            /* 確保在最上層 */
+  transition: color 0.2s;
+}
+
+#explore-modal .close-button:hover {
+  color: #e11d48;         /* hover 時變紅色（Tailwind red-600） */
+}
+
+/* 🐔 寵物場景主要區域背景容器 */
+/* 👇 控制整個遊戲畫面的背景圖呈現與覆蓋方式 */
+.pet-area {
+  position: fixed;                       /* 固定在整個畫面不隨滾動移動 */
+  top: 0;
+  left: 0;
+  width: 100vw;                          /* 寬度等於整個視窗寬度 */
+  height: 100vh;                         /* 高度等於整個視窗高度 */
+  background-size: cover;               /* 背景圖放大縮小以完全覆蓋畫面 */
+  background-position: center;          /* 背景圖置中 */
+  background-repeat: no-repeat;         /* 不重複貼圖（單張背景） */
+  z-index: 0;                            /* 放在最底層，其他物件蓋在上面 */
+  overflow: hidden;                     /* 多出的內容不顯示，避免畫面破版 */
+  position: relative;                   /* 為內部絕對定位元件提供定位參考 */
+}
+
+
+/* 👤 玩家資訊群（左上角） */
+.info-panel {
+  position: absolute;           /* 固定位置，不受其他元素影響 */
+  top: 10px;                    /* 距離畫面頂端 10px */
+  left: 10px;                   /* 距離左側 10px */
+  right: 10px;                  /* 可搭配 flex 撐開整個寬度 */
+  z-index: 9999;                /* 疊在最上層，避免被遮擋 */
+  display: flex;                /* 啟用 flex 排列 */
+  flex-direction: row;         /* 子項目橫向排列 */
+  align-items: center;         /* 子元素垂直置中 */
+  gap: 12px;                    /* 子元素之間的距離 */
+  transform: scale(1);         /* 整體縮放大小（你可以調整比例） */
+  transform-origin: top left;  /* 縮放基準點：左上角 */
+  background: #fff;            /* 白色背景 */
+  border-radius: 999px;        /* 全圓角 → 形成橢圓 */
+  padding: 6px 16px;           /* 上下 6px、左右 16px 的內距 */
+  box-shadow: 0 0 6px rgba(0,0,0,0.1); /* 陰影增加立體感 */
+}
+
+/* 左邊等級圓環 */
+.level-circle {
+  width: 100px;
+  height:100px;
+  margin-top: -30px;   /* ✅ 往上拉一點 */
+  margin-left: 0px;   /* ✅ 往右推一點 */
+}
+
+.level-circle-svg {
+  width: 130px;       /* SVG 寬度 */
+  height: 130px;      /* SVG 高度 */
+}
+
+.bg {
+  fill: none;         /* 無填色 */
+  stroke: #eee;       /* 淺灰色外框圓圈 */
+  stroke-width: 3;    /* 線條寬度 */
+}
+
+.progress {
+  stroke: orange;     /* 經驗條顏色 */
+  stroke-width: 3;
+  fill: none;
+  transform: rotate(0deg);       /* 不旋轉（保留） */
+  transform-origin: center;
+}
+.level-text {
+  font-size: 10px;
+  fill: black;
+  font-weight: bold;
+}
+
+.level-number {
+  font-size: 10px;
+  fill: black;
+  font-weight: bold;
+}
+
+.level-label {
+  transform: translateY(5px) scale(1.3); /* 讓 Lv + 數字整體往下移動＋放大 */
+  transform-origin: center;
+}
+.center-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+ 
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;                      /* 名字與筆圖示之間間距 */
+}
+
+#pet-name-display {
+  font-weight: bold;
+  font-size: 36px;
+  margin-left: 20px;   /* ✅ 往右推一點 */
+}
+
+#rename-btn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 36px;
+  cursor: pointer;
+}
+
+.status-row {
+  font-size: 36px;
+  color: #444;
+  margin-top: 20px;     /* 👉 往下移動 */
+  margin-left: 20px;   /* 👉 往右移動 */
+}
+
+.coin-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid orange;
+  border-radius: 20px;      /* 外框圓角 */
+  padding: 4px 10px;        /* 上下 4px、左右 10px 內距 */
+  color: orange;
+  font-weight: bold;
+  font-size: 36px;
+  margin-left: auto;   /* 讓它靠右（必要）*/
+  margin-top: -20px;    /* ↑ 往上移（可依需要微調） */
+}
+
+#weather-toggle {
+  position: fixed;       /* 讓它固定在畫面上 */
+  top: 200px;         /* 往上留出空間，避免被最下方按鈕群擋住 */
+  left: 40px;            /* 左邊邊距 */
+  color: orange;
+  font-size: 80px;
+  cursor: pointer;
+  z-index: 9999;         /* 確保在最上層，不被蓋住 */
+}
+
+/* 🎛️ 狀態條群（右上角） */
+
+/* 整體圓圈狀態區塊的樣式設定 */
+.status-circles {
+  transform: scale(0.9);     /* 將整個區塊縮小 90% */
+  gap: 10px;                  /* 每個圓圈之間的間距 */
+  margin-left: auto;         /* ✅ 關鍵：讓整塊狀態圓圈靠右對齊 */
+}
+
+/* 每個圓圈包裝容器的基本樣式 */
+.circle-wrapper {
+  text-align: center;        /* 讓內部的文字置中 */
+}
+
+/* 設定 SVG 尺寸大小（圓圈大小控制在這裡） */
+.circle-svg {
+  width: 110px;              /* SVG 寬度 */
+  height: 110px;             /* SVG 高度 */
+}
+
+/* 灰色背景圓圈樣式 */
+.circle-bg {
+  stroke: #e5e7eb;           /* 灰色邊框 */
+  stroke-width: 10;          /* 圓圈粗細 */
+  fill: none;                /* 不填色 */
+}
+
+/* 彩色進度條圓圈樣式（前景圈） */
+.circle-bar {
+  stroke-width: 10;          /* 圓圈粗細 */
+  fill: none;                /* 不填色 */
+  transform: rotate(-90deg); /* 讓進度從上方開始畫圓 */
+  transform-origin: 50% 50%; /* 旋轉中心設定為圓心 */
+  stroke-linecap: round;     /* 線尾是圓頭 */
+}
+
+/* 下方的百分比數字樣式 */
+.status-value {
+  font-size: 32px;           /* 字體大小 */
+  font-weight: bold;         /* 粗體 */
+  margin-top: 4px;           /* 圓圈和數字之間的距離 */
+}
+
+/* 圓圈正中央顯示的「飢餓 / 快樂 / 精力 / 清潔」文字樣式 */
+.circle-title {
+  font-size: 32px;           /* 圓內文字大小 */
+  fill: #333;                /* 深灰色字體 */
+  font-weight: bold;         /* 粗體 */
+  pointer-events: none;      /* 禁止滑鼠事件（避免影響操作） */
+}
+
+/* 各個狀態對應的圓圈進度顏色 */
+.hunger .circle-bar      { stroke: red; }
+.happiness .circle-bar   { stroke: orange; }
+.energy .circle-bar      { stroke: blue; }
+.cleanliness .circle-bar { stroke: green; }
+
+/* 各個狀態對應的百分比文字顏色 */
+.hunger .status-value      { color: red; }
+.happiness .status-value  { color: orange; }
+.energy .status-value      { color: blue; }
+.cleanliness .status-value { color: green; }
+
+
+/* 🧠 功能按鈕群：底部置中 */
+/* 這是控制功能按鈕的主要容器，例如餵食、清潔、睡覺等行為按鈕 */
+.control-panel {
+  position: absolute;              /* 絕對定位：固定在畫面上 */
+  bottom: 20px;                    /* 離畫面底部 20px */
+  left: 50%;                       /* 從畫面水平中間開始 */
+  transform: translateX(-50%)      /* 水平置中 */ 
+             scale(0.3);           /* 整體縮小為 30% 尺寸 */
+  transform-origin: bottom center; /* 以底部中心為縮放原點，不跑版 */
+  display: grid;                   /* 使用 CSS Grid 排列多個按鈕 */
+  grid-template-columns: repeat(4, minmax(60px, 1fr)); /* 建立 4 欄，按鈕寬最少 60px */
+  gap: 8px;                        /* 每個按鈕之間間距為 8px */
+  z-index: 50;                     /* 蓋過背景、角色、地圖 */
+}
+/* 🟢 狀態條樣式微調 */
+/* 用於所有顯示狀態的進度條（如飽足、快樂等），使其更細緻美觀 */
+.status-bar {
+  height: 6px;                    /* 狀態條高度為 6px，比原本更細 */
+  border-radius: 3px;             /* 圓角為 3px，讓條狀外觀柔和 */
+  transition: width 0.3s ease;   /* 寬度變化時添加滑順動畫 */
+}
+/* 🟠 圓形按鈕統一設定 */
+/* 下方是一整套按鈕區塊樣式，讓底部控制按鈕外觀一致、美觀 */
+
+/* 📦 外層容器：固定在底部中間，包住整排按鈕（含按鈕列） */
+.button-wrapper {
+  position: fixed;                /* 固定定位，滾動畫面時不會動 */
+  bottom: 180px;                  /* 離底部 180px（避免遮住 log 視窗） */
+  left: 50%;                      /* 從畫面中間開始 */
+  transform: translateX(-50%);   /* 水平置中 */
+  z-index: 99;                    /* 層級較高，顯示於最上層 */
+  display: flex;                  /* Flex 排版（橫排） */
+  justify-content: center;       /* 所有內容置中對齊 */
+  width: 100%;                   /* 整條寬度為 100%，確保置中 */
+}
+/* ⭕ 六顆功能按鈕排成一列的容器 */
+.button-row {
+  display: flex;                  /* 使用 Flex 排版（橫向） */
+  flex-wrap: nowrap;             /* 不允許自動換行 */
+  gap: 12px;                      /* 按鈕之間間距 12px */
+  justify-content: center;       /* 所有按鈕置中 */
+  align-items: center;           /* 垂直置中 */
+  transform: scale(0.9)
+}
+/* 🎯 每顆圓形按鈕的統一外觀設定 */
+.btn-circle {
+  width: 140px;                   /* 按鈕寬度 */
+  height: 140px;                  /* 按鈕高度（與寬一致，維持圓形） */
+  border-radius: 50%;            /* 完整圓角，變成圓形 */
+  padding: 0;                     /* 取消內距，避免內容錯位 */
+  display: flex;                 /* 使用 Flex 讓內容置中 */
+  flex-direction: column;        /* 內容垂直排列：上 icon、下文字 */
+  justify-content: center;       /* 垂直置中 */
+  align-items: center;           /* 水平置中 */
+  color: white;                  /* 字體顏色為白色（一般搭配彩色背景） */
+  font-weight: bold;             /* 字體加粗 */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 陰影讓按鈕有立體感 */
+  text-align: center;            /* 文字置中對齊 */
+}
+/* ⬆️ 按鈕內的圖示（通常使用 Font Awesome） */
+.btn-circle i {
+  font-size: 64px;               /* 圖示大小 */
+  margin-bottom: 6px;            /* 圖示與文字之間間距 */
+  display: block;                /* 獨立一行 */
+}
+/* ⬇️ 按鈕內的文字說明（在圖示下方） */
+.btn-circle span {
+  font-size: 42px;               /* 文字大小 */
+  line-height: 1;                /* 行高為 1（不加額外空白） */
+  display: block;                /* 獨立一行 */
+}
+/* 📱 響應式設計：手機裝置下按鈕縮小調整 */
+@media (max-width: 768px) {
+  .btn-circle {
+    width: 80px;                 /* 縮小寬度 */
+    height: 80px;                /* 縮小高度 */
+  }
+
+  .btn-circle i {
+    font-size: 24px;            /* 圖示縮小 */
+    margin-bottom: 4px;         /* 圖示與文字間距縮小 */
+  }
+
+  .btn-circle span {
+    font-size: 16px;            /* 文字縮小 */
+  }
+}
+
+    /* 🪟 所有模態框的基本設定（包含一般 modal、裝扮 costume-modal、復活 revive-modal） */
+.modal, .costume-modal, .revive-modal {
+    display: none;                          /* 預設隱藏，透過 JS 來顯示 */
+    position: fixed;                        /* 固定在畫面上不會被捲動影響 */
+    top: 0;
+    left: 0;
+    width: 100%;                            /* 全畫面寬度 */
+    height: 100%;                           /* 全畫面高度 */
+    background-color: rgba(0,0,0,0.5);      /* 背景為半透明黑色 */
+    z-index: 1000;                          /* 層級很高，蓋住所有畫面 */
+    justify-content: center;               /* 將裡面的內容水平置中 */
+    align-items: center;                   /* 將裡面的內容垂直置中 */
+}
+
+/* ✍️ 所有文字輸入框的樣式（如命名、輸入指令等） */
+input[type="text"] {
+    font-size: 48px; /* 使用大字，適合觸控裝置輸入 */
+}
+
+/* 📦 所有模態框內部的內容區（即 modal-content） */
+.modal-content {
+    position: relative;                    /* 為了讓右上角關閉叉叉能相對定位 */
+    background-color: white;              /* 背景為白色 */
+    padding: 40px;                         /* 內距 */
+    border-radius: 20px;                   /* 邊角圓弧 */
+    width: 800px;                          /* 固定寬度為橫向長方形 */
+    height: 600px;                         /* 固定高度，可容納內容 */
+    overflow-y: auto;                      /* 若內容太多則可垂直滾動 */
+    max-width: 90%;                        /* 手機寬度限制最大 90% */
+    font-size: 48px;                       /* 內文大字體顯示 */
+}
+
+
+/* 🏷️ 名稱顯示區容器（寵物命名、玩家名稱） */
+.name-container {
+    display: flex;                         /* 讓內容橫向對齊 */
+    align-items: center;                   /* 垂直置中對齊 */
+    justify-content: center;               /* 水平置中對齊 */
+}
+
+
+
+/* 🔴 按鈕提示動畫（會外框閃爍吸引注意） */
+@keyframes buttonPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }  /* 初始：紅色陰影內縮 */
+    70%  { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } /* 擴大陰影變透明 */
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }    /* 回到初始 */
+}
+
+/* 🔴 讓按鈕有閃爍提示效果的類別 */
+.pulse-button {
+    animation: buttonPulse 2s infinite;    /* 每兩秒閃爍一次 */
+}
+
+/* 🌧️ 閃電特效 */
+.lightning-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  opacity: 0.8;
+  z-index: 1000;
+  transition: opacity 0.2s ease-out;
+  pointer-events: none; /* 不阻擋點擊 */
+}
+
+
+/* 🌧️ 雨滴動畫單一雨滴設定（位置、外觀、動畫） */
+.raindrop {
+    position: absolute;                   /* 每滴雨是絕對定位 */
+    top: 0;                               /* 從畫面最上方開始下 */
+
+    /* ✅ 外觀設定 */
+    width: 12px;                           /* 雨滴寬度（變粗） */
+    height: 20px;                         /* 雨滴高度（變長） */
+     background-color: rgba(255, 255, 255, 0.25); /* ✅ 白色 + 25% 透明 */
+     
+    /* ✅ 執行下落動畫（下到畫面底部） */
+    animation: rainFall 0.6s linear infinite;
+}
+
+/* 🌧️ 雨滴動畫關鍵影格：往下落到底 */
+@keyframes rainFall {
+    to {
+        transform: translateY(100vh);     /* 雨滴落到底部 */
+    }
+}
+
+
+/* ✅ 雨滴動畫：往下移動畫面高度 */
+@keyframes rainFall {
+    to {
+        transform: translateY(100vh);
+    }
+}
+/* ⭐ 夜晚星星動畫（閃爍） */
+.star {
+  position: absolute;             /* 每一顆星星都是絕對定位 */
+  width: 12px;                     /* 星星寬度 */
+  height: 8px;                    /* 星星高度 */
+  background-color: white;        /* 白色星星 */
+  border-radius: 50%;             /* 圓形 */
+  opacity: 0.8;                   /* 初始透明度 */
+  animation: twinkle 2s infinite ease-in-out; /* 加入閃爍動畫 */
+}
+
+/* ⭐ 星星閃爍動畫關鍵影格 */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }      /* 閃爍：淡出 */
+  50% { opacity: 1; }             /* 閃爍：最亮 */
+}
+
+/* ⭐ 星星容器只在畫面上半部顯示 */
+#starsContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;                  /* 滿版寬度 */
+  height: 50vh;                 /* 只佔螢幕上半部 */
+  overflow: hidden;             /* 超出部分不顯示 */
+  pointer-events: none;         /* 不擋住點擊操作 */
+  z-index: 1;                   /* 顯示在背景圖上層、角色下層 */
+}
+
+/* 🌙 月亮圖示（置中顯示在螢幕上方） */
+#moon {
+  position: absolute;
+  top: 200px;                     /* 離上方一段距離 */
+  left: 50%;                     /* 從中間開始 */
+  transform: translateX(-50%);   /* 置中對齊 */
+  width: 240px;
+  height: 240px;
+  background-image: url('https://i.imgur.com/Ds6mk6p.png'); /* 可換你喜歡的月亮圖 */
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 2;                    /* 顯示在星星之上 */
+  opacity: 0.9;
+}
+
+ /* ======================================
+🔹 底部控制按鈕樣式（聊天室 / 日誌）
+====================================== */
+#toggle-log-btn,
+#chat-toggle-btn {
+  width: 100%;
+  color: white;
+  font-size: 60px;
+  padding: 24px 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+#toggle-log-btn {
+  background-color: #3b82f6; /* 藍色 */
+}
+
+#chat-toggle-btn {
+  background-color: #ec4899; /* 粉紅 */
+}
+
+/* ======================================
+📋 日誌抽屜樣式
+====================================== */
+#log-drawer {
+  position: fixed;
+  bottom: -100%;
+  left: 0;
+  width: 100%;
+  height: 300px;
+  background-color: rgba(255,255,255,0.95);
+  transition: bottom 0.3s ease;
+  z-index: 9999;
+  padding: 20px;
+  overflow-y: auto;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+body.log-open #log-drawer {
+  bottom: 120px; /* 顯示在畫面底部上方，避免遮住按鈕 */
+}
+
+body.log-open .bg-white.rounded-xl {
+  margin-bottom: 320px; /* 推開主內容 */
+}
+
+/* ======================================
+💬 聊天室抽屜樣式
+====================================== */
+/* 💬 聊天室抽屜（預設隱藏） */
+#chat-panel {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height:500px;
+  background-color: rgb(255, 255, 255);
+  transform: translateY(100%);
+  transition: transform 0.1s ease-in-out;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  padding: 0; /* 改成 0 比較方便彈性控制 */
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+#close-chat-btn {
+  position: absolute;
+  top: 5px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 60px;
+  cursor: pointer;
+  z-index: 1001;
+}
+body.chat-open #chat-panel {
+  transform: translateY(0px); /* 避開底部的兩個大按鈕 */
+}
+
+/* 聊天訊息容器（可捲動） */
+#chat-messages {
+  flex: 1;
+  padding: 20px;
+  font-size: 36px;
+  overflow-y: auto;
+}
+
+/* 聊天輸入區塊（固定在下方） */
+#chat-input-area {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid #ccc;
+  background: white;
+}
+
+#chat-input {
+  flex: 1;
+  font-size: 42px;
+  padding: 12px;
+}
+
+#send-btn {
+  font-size: 42px;
+  padding: 24px 24px;
+}
+
+
+/* 🔴 日誌視窗內的重置按鈕 */
+#reset-btn.reset-button {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  z-index: 10001;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  font-size: 40px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+#reset-btn.reset-button:hover {
+  background-color: #dc2626;
+}
+
+
+/* ✅ 探險模式啟動時，要隱藏的區塊（避免干擾畫面） */
+body.exploring .status-panel,
+body.exploring .info-panel,
+body.exploring .button-wrapper,
+body.exploring .control-panel,
+body.exploring .lightning-flash,
+body.exploring #weather-toggle,
+body.exploring #moon,
+body.exploring #starsContainer,
+body.exploring #control-buttons,
+body.exploring #rainContainer {
+  display: none !important;
+}
+
+/* ✅ 探險時畫面上顯示「冒險中」的文字 */
+#explore-label {
+  position: absolute;
+  top: 40px;                       /* 離上方距離 */
+  left: 50%;
+  transform: translateX(-50%);     /* 水平置中 */
+  font-size: 60px;                 /* 字體夠大，讓玩家看清楚 */
+  font-weight: bold;
+  color: white;
+  text-shadow: 2px 2px 4px black;  /* 加黑色陰影，避免白字難看清 */
+  z-index: 50;
+  display: none;                   /* 初始隱藏，進入探險時才顯示 */
+}
+
+/* ✅ 當 body 加上 exploring 時，顯示 explore-label */
+body.exploring #explore-label {
+  display: block;
+}
+
+/* ✅ 探險中時隱藏日誌按鈕群（避免干擾） */
+body.exploring #log-controls #chat-button-container {
+  display: none !important;
+}
+
+/* ✅ 探險模式中的「結束探險」按鈕樣式（畫面底部置中） */
+#end-explore-btn {
+  display: none;                   /* 預設隱藏 */
+  position: fixed;
+  bottom: 80px;                    /* 距離畫面底部 80px */
+  left: 50%;
+  transform: translateX(-50%);     /* 水平置中 */
+  font-size: 60px;                 /* 按鈕文字夠大 */
+  padding: 24px 40px;              /* 按鈕大小適中 */
+  background-color: #ef4444;        /* 紅色背景 */
+  color: white;
+  border: none;
+  border-radius: 16px;
+  z-index: 10000;                  /* 極高層級，永遠在最上方 */
+}
+
+/* ✅ 探險中時顯示結束按鈕 */
+body.exploring #end-explore-btn {
+  display: block;
+}
+
